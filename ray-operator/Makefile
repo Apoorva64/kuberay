@@ -84,13 +84,19 @@ build: generate fmt vet ## Build manager binary.
 run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
-docker-image: ## Build image only
-	${ENGINE} build -t ${IMG} .
+docker-arm-image:
+	${ENGINE} buildx build -t ${IMG}-arm64 . --platform linux/arm64 --load --build-arg ARCH=arm64
+
+docker-amd-image:
+	${ENGINE} buildx build -t ${IMG}-amd64 . --platform linux/amd64 --load --build-arg ARCH=amd64
+
+docker-image: docker-arm-image docker-amd-image
 
 docker-build: test docker-image ## Build image with the manager.
 
 docker-push: ## Push image with the manager.
-	${ENGINE} push ${IMG}
+	${ENGINE} push ${IMG}-arm64 && ${ENGINE} push ${IMG}-amd64 && ${ENGINE} manifest create ${IMG} ${IMG}-amd64 ${IMG}-arm64 --amend && ${ENGINE} manifest push ${IMG}
+
 
 ##@ Deployment
 

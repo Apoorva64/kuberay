@@ -68,11 +68,18 @@ build: fmt vet fumpt imports lint ## Build api server binary.
 run: fmt vet fumpt imports lint ## Run the api server from your host.
 	go run -race cmd/main.go
 
-docker-image: test ## Build image with the api server.
-	${ENGINE} build -t ${IMG} -f Dockerfile ..
+docker-arm-image:
+	${ENGINE} buildx build  -t ${IMG}-arm64  .. --platform linux/arm64 --load --build-arg ARCH=arm64 -f Dockerfile
 
-docker-push: ## Push image with the api server.
-	${ENGINE} push ${IMG}
+docker-amd-image:
+	${ENGINE} buildx build  -t ${IMG}-amd64  .. --platform linux/amd64 --load --build-arg ARCH=amd64 -f Dockerfile
+
+docker-image: docker-arm-image docker-amd-image
+
+docker-build: test docker-image ## Build image with the manager.
+
+docker-push: ## Push image with the manager.
+	${ENGINE} push ${IMG}-arm64 && ${ENGINE} push ${IMG}-amd64 && ${ENGINE} manifest create ${IMG} ${IMG}-amd64 ${IMG}-arm64
 
 ##@ Deployment
 .PHONY: install

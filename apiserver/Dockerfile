@@ -1,6 +1,8 @@
 # Build the backend service
 FROM registry.access.redhat.com/ubi8/go-toolset:1.19.10-10 as builder
 
+ARG ARCH=amd64
+
 WORKDIR /workspace
 # Copy the Go Modules manifests
 COPY apiserver/go.mod apiserver/go.mod
@@ -19,7 +21,7 @@ RUN go mod download
 # Build
 USER root
 WORKDIR /workspace/apiserver
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o kuberay-apiserver cmd/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=$ARCH go build -a -o kuberay-apiserver cmd/main.go
 
 FROM scratch
 WORKDIR /workspace
